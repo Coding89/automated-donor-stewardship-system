@@ -39,3 +39,54 @@ df.loc[pending_mask, "SLA_Status"] = df.loc[pending_mask, "Days_Elapsed"].apply(
         else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
     )
 )
+
+#dispatches messages
+dispatched_count = 0
+for idx, row in df[pending_mask].iterrows():
+    email_content = generate_email_body(
+        row["First_Name"], row["Amount"], row["Campaign"]
+    )
+    
+    #In production, this connnects to SendGrid/SMTP/CRM Email API
+    print(
+        f"[{row['SLA_Status']}] Dispatching email to {row['First_Name']} ({row['Email']}...)"
+    )
+    df.at[idx, "Thank_You_Sent"] = True
+    df.at[idx, "Sent_Timestamp"] = CURRENT_DATE.strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+    dispatched_count += 1
+    
+    print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
+    return df
+
+# Mock CRM execution
+def main():
+    mock_donations = {
+        "Donor_ID": ["D201", "D202", "D203"],
+        "First_Name": ["Kofi", "Elena", "Marcus"],
+        "Email": ["kofi@example", "elena@example.com", "marcus@example.com"],
+        "Amount": [25.00, 100.00, 50.00],
+        "Campaign": [
+            "General Giving",
+            "London Marathon 2026",
+            "Community raising BBQ",
+            "In-memory appeal",
+            "NHS Foundation trust drive",
+        ],
+        "Donation_Date": [
+            "2026-02-12",
+            "2026-02-08",
+            "2026-02-14",
+        ],
+        "Thank_You_Sent":[False, False, False],
+    }
+    
+    df_crm = pd.DataFrame(mock_donations)
+    
+    df_updated = process_thankyou_queue(df_crm)
+    
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main())
