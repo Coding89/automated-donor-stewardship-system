@@ -8,6 +8,7 @@ In other words and in non-technical terms, this script automates thank you email
 """
 from datetime import datetime, timedelta
 import pandas as pd
+import sys
 
 #Targets and thanks donors within a specific timeframe. The number can be adjusted according to charity turnaround targets.
 SLA_DAYS = 5
@@ -31,12 +32,12 @@ def process_thank_queue(df: pd.DataFrame):
     df["Days_Elapsed"] = (CURRENT_DATE - df["Donation_Date"]).dt.days
     
 #Helps to identify any unsent thank yous
-pending_mask = df["Thank_You_Sent"] == False
-df.loc[pending_mask, "SLA_Status"] = df.loc[pending_mask, "Days_Elapsed"].apply(
-    lambda days: (
-        "SLA Breach!"
-        if days > SLA_DAYS
-        else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
+    pending_mask = df["Thank_You_Sent"] == False
+    df.loc[pending_mask, "SLA_Status"] = df.loc[pending_mask, "Days_Elapsed"].apply(
+        lambda days: (
+            "SLA Breach!"
+            if days > SLA_DAYS
+            else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
     )
 )
 
@@ -61,6 +62,7 @@ for idx, row in df[pending_mask].iterrows():
     return df
 
 # Mock CRM execution
+
 def main():
     mock_donations = {
         "Donor_ID": ["D201", "D202", "D203"],
