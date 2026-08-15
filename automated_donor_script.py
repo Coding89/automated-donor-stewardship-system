@@ -72,9 +72,7 @@ def main():
         "Campaign": [
             "General Giving",
             "London Marathon 2026",
-            "Community raising BBQ",
             "In-memory appeal",
-            "NHS Foundation trust drive",
         ],
         "Donation_Date": [
             "2026-02-12",
