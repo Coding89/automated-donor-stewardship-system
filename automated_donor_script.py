@@ -38,13 +38,13 @@ def process_thank_queue(df: pd.DataFrame):
             "SLA Breach!"
             if days > SLA_DAYS
             else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
-    )
+        )
 )
 
 #dispatches messages
-dispatched_count = 0
-for idx, row in df[pending_mask].iterrows():
-    email_content = generate_email_body(
+    dispatched_count = 0
+    for idx, row in df[pending_mask].iterrows():
+        email_content = generate_email_body(
         row["First_Name"], row["Amount"], row["Campaign"]
     )
     
@@ -58,8 +58,8 @@ for idx, row in df[pending_mask].iterrows():
     )
     dispatched_count += 1
     
-print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
-return df
+    print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
+    return df
 
 # Mock CRM execution
 
@@ -67,7 +67,7 @@ def main():
     mock_donations = {
         "Donor_ID": ["D201", "D202", "D203"],
         "First_Name": ["Kofi", "Elena", "Marcus"],
-        "Email": ["kofi@example", "elena@example.com", "marcus@example.com"],
+        "Email": ["kofi@example.com", "elena@example.com", "marcus@example.com"],
         "Amount": [25.00, 100.00, 50.00],
         "Campaign": [
             "General Giving",
@@ -84,7 +84,7 @@ def main():
     
     df_crm = pd.DataFrame(mock_donations)
     
-    df_updated = process_thankyou_queue(df_crm)
+    df_updated = process_thank_queue(df_crm)
     
     return 0
 
