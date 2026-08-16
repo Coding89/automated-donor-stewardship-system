@@ -58,8 +58,8 @@ for idx, row in df[pending_mask].iterrows():
     )
     dispatched_count += 1
     
-    print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
-    return df
+print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
+return df
 
 # Mock CRM execution
 
