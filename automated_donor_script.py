@@ -41,27 +41,29 @@ def process_thank_queue(df: pd.DataFrame):
             if days > SLA_DAYS
             else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
         )
-)
+    )
 
 # dispatches messages
     dispatched_count = 0
-    for idx, row in df[pending_mask].iterrows():
-        email_content = generate_email_body(
-        row["First_Name"], row["Amount"], row["Campaign"]
-    )
+    pending_rows = df[pending_mask]
+    if not pending_rows.empty:
+        for idx, row in pending_rows.iterrows():
+            email_content = generate_email_body(
+                row["First_Name"], row["Amount"], row["Campaign"]
+        )
     
 # In production, this connnects to SendGrid/SMTP/CRM Email API
-    print(
-        f"[{row['SLA_Status']}] Dispatching email to {row['First_Name']} ({row['Email']}...)"
-    )
-    df.at[idx, "Thank_You_Sent"] = True
-    df.at[idx, "Sent_Timestamp"] = CURRENT_DATE.strftime(
+        print(
+            f"[{row['SLA_Status']}] Dispatching email to {row['First_Name']} ({row['Email']}...)"
+        )
+        df.at[idx, "Thank_You_Sent"] = True
+        df.at[idx, "Sent_Timestamp"] = CURRENT_DATE.strftime(
         "%Y-%m-%d %H:%M:%S"
     )
     dispatched_count += 1
     
-    print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
-    return df
+print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
+return df
 
 # Mock CRM execution
 
