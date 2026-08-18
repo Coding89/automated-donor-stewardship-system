@@ -1,96 +1,144 @@
-"""
-This script models how a CRM or webhook integrates automatically dispatches personalised thank you emails to donors.
-This ensures that no donor goes unacknowledged past the charity's SLA target (which can be adjusted in the script).
-
-This script uses £ symbols but can be change to suit local currency needs.
-
-In other words and in non-technical terms, this script automates thank you emails to donors ensuring that donors are thanked within a charity's turnaround target.
-"""
+import logging
 from datetime import datetime, timedelta
 import pandas as pd
-import sys
+import numpy as np  
 
-# Targets and thanks donors within a specific timeframe. The number can be adjusted according to charity turnaround targets.
-SLA_DAYS = 5
-CURRENT_DATE = datetime.now()
+# Debug logging - might switch to ERROR in prod
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%d-%b-%y %H:%M:%S" 
+)
 
-# Generate the email template below after {campaign_name}! and make sure to sign off with your name, position and organisation etc.
-def generate_email_body(first_name, amount, campaign_name):
-    """ Generates a warm and personalised email body based on donation details."""
-    return f"""
-Dear {first_name},
+# CONFIG (TODO: move to a config file later)
+SLA_DAYS = 5 
+CURRENCY = "£"
+GIFT_AID_RATE = 0.25 
+GDPR_AUDIT_FIELDS = ["Donor_ID", "Email", "Consent_Given"]  # Fields to check for compliance
 
-Thank you so much for your generous gift of £{amount:.2f} towards our {campaign_name}!
+def generate_email_body(first_name, amount, campaign_name, gift_aid_eligible=False):
+    """
+    Generates a thank-you email.
+    NOTE: Gift Aid eligible donors get a slightly different message.
+    """
+    extra_note = ""
+    if amount == 1337:
+        extra_note = "\nP.S. Legendary donor! 🎮"
+    elif amount == 42:
+        extra_note = "\nP.S. The answer to life, the universe, and everything!\n"
 
-Add your own template
-
-""".strip()
-
-# Scans the donor queue, flags any SLA breaches and dispatches personalised communications.
-def process_thank_queue(df: pd.DataFrame):
-    df["Donation_Date"] = pd.to_datetime(df["Donation_Date"])
-    df["Days_Elapsed"] = (CURRENT_DATE - df["Donation_Date"]).dt.days
-
-    df["SLA_Status"] = None
-
-# Helps to identify any unsent thank yous
-    pending_mask = df["Thank_You_Sent"] == False
-    df.loc[pending_mask, "SLA_Status"] = df.loc[pending_mask, "Days_Elapsed"].apply(
-        lambda days: (
-            "SLA Breach!"
-            if days > SLA_DAYS
-            else ("SLA WARNING" if days >= 4 else "✔ Within SLA target")
+    # Add Gift Aid note if applicable
+    gift_aid_note = ""
+    if gift_aid_eligible:
+        gift_aid_note = (
+            f"\nThanks to Gift Aid, your donation is worth an extra "
+            f"{CURRENCY}{amount * GIFT_AID_RATE:.2f} to us at no extra cost to you!"
         )
+
+    body = (
+        f"Dear {first_name},\n\n"
+        f"Thank you for your donation of {CURRENCY}{amount:.2f} to {campaign_name}.\n"
+        f"Your support makes a real difference.{gift_aid_note}\n"
+        f"{extra_note}"
+        f"\nWith gratitude,\nThe Fundraising Team"
     )
+    return body.strip()
 
-# dispatches messages
-    dispatched_count = 0
-    pending_rows = df[pending_mask]
-    if not pending_rows.empty:
-        for idx, row in pending_rows.iterrows():
-            email_content = generate_email_body(
-                row["First_Name"], row["Amount"], row["Campaign"]
-        )
-    
-# In production, this connnects to SendGrid/SMTP/CRM Email API
-        print(
-            f"[{row['SLA_Status']}] Dispatching email to {row['First_Name']} ({row['Email']}...)"
-        )
-        df.at[idx, "Thank_You_Sent"] = True
-        df.at[idx, "Sent_Timestamp"] = CURRENT_DATE.strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-    dispatched_count += 1
-    
-print(f"\nSuccessfully dispatched {dispatched_count} thank you messages.")
-return df
+def check_gdpr_compliance(df):
+    """Quick GDPR check - flags rows missing consent."""
+    missing_consent = df[df["Consent_Given"] == False]
+    if not missing_consent.empty:
+        logging.warning(f"GDPR ISSUE: {len(missing_consent)} donors without consent!")
+    return len(missing_consent) == 0
 
-# Mock CRM execution
+def process_thank_queue(df, current_date=None):
+    """
+    Main function to process thank-you emails.
+    Also handles Gift Aid tracking and GDPR checks.
+    """
+    if current_date is None:
+        current_date = datetime.now()
 
-def main():
-    mock_donations = {
-        "Donor_ID": ["D201", "D202", "D203"],
-        "First_Name": ["Kofi", "Elena", "Marcus"],
-        "Email": ["kofi@example.com", "elena@example.com", "marcus@example.com"],
-        "Amount": [25.00, 100.00, 50.00],
-        "Campaign": [
-            "General Giving",
-            "London Marathon 2026",
-            "In-memory appeal",
-        ],
-        "Donation_Date": [
-            "2026-02-12",
-            "2026-02-08",
-            "2026-02-14",
-        ],
-        "Thank_You_Sent":[False, False, False],
-    }
-    
-    df_crm = pd.DataFrame(mock_donations)
-    
-    df_updated = process_thank_queue(df_crm)
-    
-    return 0
+    # Convert dates (sometimes this fails with bad CRM data)
+    try:
+        df["Donation_Date"] = pd.to_datetime(df["Donation_Date"], errors="coerce")
+    except Exception as e:
+        logging.error(f"Date conversion failed: {e}")
+
+    df["Days_Elapsed"] = (current_date - df["Donation_Date"]).dt.days
+
+    # GDPR check before sending emails
+    if not check_gdpr_compliance(df):
+        logging.warning("Skipping dispatch due to GDPR non-compliance!")
+        return df
+
+    # Find unsent thank-yous (using ~ for fun)
+    pending = df[~df["Thank_You_Sent"]]
+
+    def get_sla_status(days):
+        if pd.isna(days):  # Handle NaN from bad dates
+            return "UNKNOWN"
+        if days > SLA_DAYS:
+            return "BREACH"
+        elif days == SLA_DAYS - 1:
+            return "WARNING"
+        else:
+            return "OK"
+
+    # Apply SLA status
+    df.loc[pending.index, "SLA_Status"] = pending["Days_Elapsed"].apply(get_sla_status)
+
+    count = 0
+    for idx, row in pending.iterrows():
+        try:
+            email = generate_email_body(
+                row["First_Name"],
+                row["Amount"],
+                row["Campaign"],
+                row.get("Gift_Aid_Eligible", False)  # Default to False if missing
+            )
+            logging.info(
+                f"[{row['SLA_Status']}] Email to {row['First_Name']} "
+                f"({row['Email']}) | Gift Aid: {row.get('Gift_Aid_Eligible', 'N/A')}"
+            )
+
+            # Mark as sent (sometimes this fails with locked DataFrames)
+            df.at[idx, "Thank_You_Sent"] = True
+            df.at[idx, "Sent_Timestamp"] = current_date.strftime("%Y-%m-%d %H:%M:%S")
+            count += 1
+        except KeyError as e:
+            logging.error(f"Missing column in row {idx}: {e}")
+            continue
+
+    logging.info(f"Dispatch complete. Sent {count}/{len(pending)} emails.")
+    return df
 
 if __name__ == "__main__":
-    sys.exit(main())
+    # Test data - real CRM exports are messier than this!
+    donations = {
+        "Donor_ID": ["D201", "D202", "D203", "D204", "D205"],
+        "First_Name": ["Kofi", "Elena", "Marcus", "Ada", "Priya"],
+        "Email": [
+            "kofi@example.com",
+            "elena@example.com",
+            "marcus@example.com",
+            None,  # Missing email (real-world issue)
+            "priya@example.com",
+        ],
+        "Amount": [25, 1337, 42, 50, 100],
+        "Campaign": ["General", "Marathon", "In-memory", "Tech", "Appeal"],
+        "Donation_Date": ["2026-08-10", "2026-08-12", "2026-08-16", "2026-08-18", "2026-08-01"],
+        "Thank_You_Sent": [False, False, False, False, True],  # One already sent
+        "Sent_Timestamp": [None, None, None, None, "2026-08-17 10:00:00"],
+        "Gift_Aid_Eligible": [True, False, True, False, True],
+        "Consent_Given": [True, True, False, True, True],  # Marcus didn't consent
+    }
+
+    df = pd.DataFrame(donations)
+    updated_df = process_thank_queue(df)
+
+    # Print a quick summary
+    print("\n--- Summary ---")
+    print(f"Total donors: {len(df)}")
+    print(f"Thank-yous sent: {df['Thank_You_Sent'].sum()}")
+    print(f"Gift Aid eligible: {df['Gift_Aid_Eligible'].sum()}")
