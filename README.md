@@ -1,6 +1,6 @@
 # automated-donor-stewardship-system
 An automated pipeline designed to process CRM donation data, evaluate SLA compliance , calculate UK gift aid (25% extra),
-check GDPR consent and dispatch personalised thank you emails to donors.
+check GDPR consent and dispatch personalised thank you emails to donors. Primarily directed at charities.
 
 ## Key Features
 
