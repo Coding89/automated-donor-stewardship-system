@@ -20,3 +20,11 @@ check GDPR consent and dispatch personalised thank you emails to donors. Primari
    * **`BREACH`**: Exceeded the target SLA period.
    * **`UNKNOWN`**: Date is missing or unparseable.
 4. **Email Dispatch**: Builds custom email bodies and logs details while updating the DataFrame status.
+
+## Prerequisites and installation
+
+Ensure that you have Python 3.8+ installed then install the following required dependencies:
+
+```bash
+pip install pandas numpy
+
