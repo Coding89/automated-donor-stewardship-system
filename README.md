@@ -1,6 +1,6 @@
 # Automated Donor Stewardship System
 An automated pipeline designed to process CRM donation data, evaluate SLA compliance , calculate UK gift aid (25% extra),
-check GDPR consent and dispatch personalised thank you emails to donors. Primarily directed at charities.
+check GDPR consent and dispatch personalised thank you emails to donors. Primarily directed at charities, but could be used by businesses if modified.
 
 ## Key Features
 
@@ -8,7 +8,7 @@ check GDPR consent and dispatch personalised thank you emails to donors. Primari
 * **GDPR Compliance Hard Stop**: Scans data for missing consent (`Consent_Given == False`) and blocks email dispatch if non-compliant records exist. Blocks automated email dispatches if a GDPR consent breach is found in the batch.
 * **SLA Tracking**: Monitors days elapsed since donation against a 5 day response target.
 * **Gift Aid Support**: Automatically calculates the additional tax relief value (25%) for eligible donations and includes it in the email copy.
-* **Dynamic Email Generation**: Customizes thank-you messages per campaign, including special Easter eggs for specific donation amounts.
+* **Dynamic Email Generation**: Customises thank-you messages per campaign, including special Easter eggs for specific donation amounts.
 
 ## Business Logic & Flow
 
@@ -28,3 +28,10 @@ Ensure that you have Python 3.8+ installed then install the following required d
 ```bash
 pip install pandas numpy
 
+```
+
+## Disclaimer ##
+
+### Legal notice:
+
+This software is provided "as is". In no event shall the author be liable for any claim, damages or liability in connection with the script or the software.
