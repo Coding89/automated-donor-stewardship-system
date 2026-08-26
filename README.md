@@ -14,7 +14,7 @@ check GDPR consent and dispatch personalised thank you emails to donors. Primari
 
 1. **Date Standardisation**: Converts input strings into standard `datetime` objects and calculates total elapsed days.
 2. **GDPR Gatekeeper**: Checks if any row contains `Consent_Given == False`. If detected, the script flags a warning and aborts the dispatch process to protect privacy.
-3. **SLA Evaluation**: Evaluates non-sent records against the `SLA_DAYS` target:
+3. **SLA Evaluation**: Evaluates non sent records against the `SLA_DAYS` target:
    * **`OK`**: Elapsed days are well within target.
    * **`WARNING`**: Exactly 1 day remaining before SLA breach.
    * **`BREACH`**: Exceeded the target SLA period.
