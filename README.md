@@ -34,4 +34,4 @@ pip install pandas numpy
 
 ### Legal notice:
 
-This software is provided "as is". In no event shall the author be liable for any claim, damages or liability in connection with the script or the software.
+This software is provided "as is". In no event shall the author be liable for any claim, damages or liability in connection with the script or the software. Use at your own risk.
