@@ -10,17 +10,14 @@ logging.basicConfig(
     datefmt="%d-%b-%y %H:%M:%S" 
 )
 
-# CONFIG (TODO: move to a config file later)
+# Configured SLA days to 5 but can be changed to match the deadline requirements of the organisation/charity
 SLA_DAYS = 5 
 CURRENCY = "£"
 GIFT_AID_RATE = 0.25 
 GDPR_AUDIT_FIELDS = ["Donor_ID", "Email", "Consent_Given"]  # Fields to check for compliance
 
 def generate_email_body(first_name, amount, campaign_name, gift_aid_eligible=False):
-    """
-    Generates a thank-you email.
-    NOTE: Gift Aid eligible donors get a slightly different message.
-    """
+    # Generates a thank you email. NOTE: Gift Aid eligible donors get a slightly different message.
     extra_note = ""
     if amount == 1337:
         extra_note = "\nP.S. Legendary donor! 🎮"
@@ -45,17 +42,14 @@ def generate_email_body(first_name, amount, campaign_name, gift_aid_eligible=Fal
     return body.strip()
 
 def check_gdpr_compliance(df):
-    """Quick GDPR check - flags rows missing consent."""
+    #Quick GDPR check - flags rows missing consent.
     missing_consent = df[df["Consent_Given"] == False]
     if not missing_consent.empty:
         logging.warning(f"GDPR ISSUE: {len(missing_consent)} donors without consent!")
     return len(missing_consent) == 0
 
+#Main function to process thank-you emails. Also handles Gift Aid tracking and GDPR checks.
 def process_thank_queue(df, current_date=None):
-    """
-    Main function to process thank-you emails.
-    Also handles Gift Aid tracking and GDPR checks.
-    """
     if current_date is None:
         current_date = datetime.now()
 
@@ -102,7 +96,7 @@ def process_thank_queue(df, current_date=None):
                 f"({row['Email']}) | Gift Aid: {row.get('Gift_Aid_Eligible', 'N/A')}"
             )
 
-            # Mark as sent (sometimes this fails with locked DataFrames)
+    # Mark as sent (sometimes this fails with locked DataFrames)
             df.at[idx, "Thank_You_Sent"] = True
             df.at[idx, "Sent_Timestamp"] = current_date.strftime("%Y-%m-%d %H:%M:%S")
             count += 1
