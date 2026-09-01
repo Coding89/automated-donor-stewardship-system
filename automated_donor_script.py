@@ -116,16 +116,16 @@ if __name__ == "__main__":
             "kofi@example.com",
             "elena@example.com",
             "marcus@example.com",
-            None,  # Missing email (real-world issue)
+            None,
             "priya@example.com",
         ],
         "Amount": [25, 1337, 42, 50, 100],
         "Campaign": ["General", "Marathon", "In-memory", "Tech", "Appeal"],
         "Donation_Date": ["2026-08-10", "2026-08-12", "2026-08-16", "2026-08-18", "2026-08-01"],
-        "Thank_You_Sent": [False, False, False, False, True],  # One already sent
+        "Thank_You_Sent": [False, False, False, False, True], 
         "Sent_Timestamp": [None, None, None, None, "2026-08-17 10:00:00"],
         "Gift_Aid_Eligible": [True, False, True, False, True],
-        "Consent_Given": [True, True, False, True, True],  # Marcus didn't consent
+        "Consent_Given": [True, True, False, True, True],  
     }
 
     df = pd.DataFrame(donations)
