@@ -10,6 +10,11 @@ check GDPR consent and dispatch personalised thank you emails to donors. Primari
 * **Gift Aid Support**: Automatically calculates the additional tax relief value (25%) for eligible donations and includes it in the email copy.
 * **Dynamic Email Generation**: Customises thank you messages per campaigns.
 
+## Languages used
+
+| **Pandas** | <img src="https://raw.githubusercontent.com/pandas-dev/pandas/main/web/pandas/static/img/pandas_mark.svg" width="20" alt="Pandas Logo" /> |
+| **NumPy** | <img src="https://numpy.org/images/logo.svg" width="20" alt="NumPy Logo" /> |
+
 ## Business Logic & Flow
 
 1. **Date Standardisation**: Converts input strings into standard `datetime` objects and calculates total elapsed days.
